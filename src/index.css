@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+body {
+    @apply bg-[#293241] text-white;
+
+}
+
+.correct {
+    @apply text-white;
+}
+
+.wrong {
+    @apply text-red-500;
+}
+
+@theme {
+    --animate-blink: blinking 1s ease-in-out infinite;
+
+    @keyframes blinking {
+
+        0%,
+        50% {
+            opacity: 0;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+}
