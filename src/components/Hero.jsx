@@ -4,7 +4,7 @@ export default function Heor() {
     const [words, setWords] = useState([]);
     const [inputs, setInputs] = useState("");
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
-    const [typedChars, setTypedChars] = useState([]);
+    const [wordTyped, setWordTyped] = useState([]);
     const containerRef = useRef(null);
 
     let string = "Prefix a fill utility with a breakpoint variant like md to only apply the utility at medium screen sizes and above";
@@ -14,48 +14,49 @@ export default function Heor() {
         setWords(string.split(" "));
         document.addEventListener("keydown", handleKeyPressed);
         return () => document.removeEventListener("keydown", handleKeyPressed);
-    }, [typedChars, currentWordIndex, inputs]);
+    }, [currentWordIndex, inputs]);
 
 
 
     function handleKeyPressed(event) {
         if (event.key === ' ') {
+            setWordTyped((prev) => [...prev, inputs]);
             if (inputs.trim() === words[currentWordIndex]) {
                 setInputs("");
                 setCurrentWordIndex(prev => prev + 1);
-                setTypedChars(prev => [...prev, event.key]);
+            } else if (wordTyped[currentWordIndex] === words[currentWordIndex]) {
+                setInputs("");
+                setCurrentWordIndex(prev => prev + 1);
+            } else {
+                setWordTyped((prev) => {
+                    return prev.slice(0, -1);
+                })
             }
+            event.preventDefault();
+            return;
         } else if (event.key === "Backspace") {
-            setInputs(() => {
+            setInputs((prev) => {
                 let inputsArray = inputs.split('');
                 let newInputs = inputsArray.slice(0, -1).join('');
                 return newInputs;
-            })
-            setTypedChars(prev => prev.slice(0, -1).length <= 0 ? [] : prev.slice(0, -1));
+            });
             setCurrentWordIndex(prev => prev <= 0 ? 0 : prev - 1);
 
         } else if (event.key.length === 1) {
             setInputs(prev => prev + event.key);
-            setTypedChars(prev => [...prev, event.key]);
         }
     }
 
     useEffect(() => {
-        console.log(typedChars, inputs, currentWordIndex);
-    }, [typedChars, inputs, currentWordIndex])
+        console.log(inputs, currentWordIndex, wordTyped);
+    }, [inputs, currentWordIndex, wordTyped])
 
     function checkTypedChars(wordIndex, ch, index) {
         if (wordIndex !== currentWordIndex) return;
+        const typedChar = inputs[index];
+        if (!typedChar) return '';
 
-        const wordBeingTyped = words[currentWordIndex];
-        const copyTypedChars = [...typedChars];
-        const typedChar = copyTypedChars.pop();
-
-        console.log(typedChar);
-
-        if (typedChar === ' ') return;
-
-        return typedChar === wordBeingTyped[index]
+        return typedChar === ch
             ? "correct text-white"
             : "wrong text-red-500";
     }
