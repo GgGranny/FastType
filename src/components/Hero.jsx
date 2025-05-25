@@ -20,28 +20,32 @@ export default function Heor() {
 
     function handleKeyPressed(event) {
         if (event.key === ' ') {
-            setWordTyped((prev) => [...prev, inputs]);
+            if (inputs.trim() !== "") {
+                setWordTyped((prev) => [...prev, inputs]);
+            }
             if (inputs.trim() === words[currentWordIndex]) {
                 setInputs("");
                 setCurrentWordIndex(prev => prev + 1);
             } else if (wordTyped[currentWordIndex] === words[currentWordIndex]) {
                 setInputs("");
-                setCurrentWordIndex(prev => prev + 1);
-            } else {
-                setWordTyped((prev) => {
-                    return prev.slice(0, -1);
-                })
             }
             event.preventDefault();
             return;
+
         } else if (event.key === "Backspace") {
-            setInputs((prev) => {
+            setInputs(() => {
                 let inputsArray = inputs.split('');
                 let newInputs = inputsArray.slice(0, -1).join('');
                 return newInputs;
             });
             setCurrentWordIndex(prev => prev <= 0 ? 0 : prev - 1);
-
+            setWordTyped((prev) => {
+                let newWordsTypedArray = [...wordTyped];
+                let newWordsCharArray = newWordsTypedArray.join(" ").split('');
+                let newWordsString = newWordsCharArray.join('').split('').slice(0, -1);
+                console.log("new sting" + Array.from(newWordsString));
+                return newWordsCharArray;
+            });
         } else if (event.key.length === 1) {
             setInputs(prev => prev + event.key);
         }
@@ -61,11 +65,15 @@ export default function Heor() {
             : "wrong text-red-500";
     }
 
+    function checkWordTyped(word, index) {
+        if (wordTyped.length === 0) return;
+        return word === wordTyped[index] ? "typed text-white" : "";
+    }
     return (
         <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
             {words.map((word, index) => {
                 return (word !== " ") && (
-                    <div key={index} className={`word  flex gap-x-1 font-medium font-sans`}>
+                    <div key={index} className={`word  flex gap-x-1 font-medium font-sans ${checkWordTyped(word, index)}`}>
                         {Array.from(word).map((character, i) => {
                             return (
                                 <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
