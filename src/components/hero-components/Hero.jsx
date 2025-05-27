@@ -9,45 +9,49 @@ export default function Heor() {
 
     let string = "Prefix a fill utility with a breakpoint variant like md to only apply the utility at medium screen sizes and above";
 
-
     useEffect(() => {
         setWords(string.split(" "));
+    }, []);
+
+    useEffect(() => {
         document.addEventListener("keydown", handleKeyPressed);
         return () => document.removeEventListener("keydown", handleKeyPressed);
     }, [currentWordIndex, inputs]);
 
-
-
     function handleKeyPressed(event) {
         if (event.key === ' ') {
-            if (inputs.trim() !== "") {
+            if (inputs.length > 0) {
                 setWordTyped((prev) => [...prev, inputs]);
-            }
-            if (inputs.trim() === words[currentWordIndex]) {
                 setInputs("");
-                setCurrentWordIndex(prev => prev + 1);
-            } else if (wordTyped[currentWordIndex] === words[currentWordIndex]) {
-                setInputs("");
+                setCurrentWordIndex((prevWordIndex) => prevWordIndex + 1);
             }
             event.preventDefault();
-            return;
+        }
 
-        } else if (event.key === "Backspace") {
-            setInputs(() => {
-                let inputsArray = inputs.split('');
-                let newInputs = inputsArray.slice(0, -1).join('');
-                return newInputs;
-            });
-            setCurrentWordIndex(prev => prev <= 0 ? 0 : prev - 1);
-            setWordTyped((prev) => {
-                let newWordsTypedArray = [...wordTyped];
-                let newWordsCharArray = newWordsTypedArray.join(" ").split('');
-                let newWordsString = newWordsCharArray.join('').split('').slice(0, -1);
-                console.log("new sting" + Array.from(newWordsString));
-                return newWordsCharArray;
-            });
-        } else if (event.key.length === 1) {
-            setInputs(prev => prev + event.key);
+        else if (event.key === "Backspace") {
+            if (inputs.length > 0) {
+                setInputs(prev => prev.slice(0, -1));
+                return;
+            }
+            if (currentWordIndex > 0 && wordTyped.length >= currentWordIndex) {
+                const prevIndex = currentWordIndex - 1;
+                const prevTypedWord = wordTyped[prevIndex];
+                const correctWord = words[prevIndex];
+                if (prevTypedWord !== correctWord) {
+                    setWordTyped(prev => {
+                        const updated = [...prev];
+                        updated.splice(prevIndex, 1);
+                        return updated;
+                    });
+                    setInputs(prevTypedWord);
+                    setCurrentWordIndex(prev => prev - 1);
+                }
+            }
+        }
+
+
+        else if (event.key.length === 1) {
+            setInputs((prevInputs) => prevInputs + event.key);
         }
     }
 
@@ -69,6 +73,30 @@ export default function Heor() {
         if (wordTyped.length === 0) return;
         return word === wordTyped[index] ? "typed text-white" : "";
     }
+
+    function getCursorPosition() {
+        const wordElements = containerRef.current?.querySelectorAll(".word");
+        if (!wordElements || !wordElements[currentWordIndex]) return { top: 0, left: 0 };
+
+        const wordElement = wordElements[currentWordIndex];
+        const spans = wordElement.querySelectorAll("span");
+
+        if (!spans || inputs.length === 0 || inputs.length >= spans.length) {
+            return {
+                top: wordElement.offsetTop,
+                left: wordElement.offsetLeft
+            };
+        }
+        else {
+            const charSpans = spans[inputs.length - 1]
+            return {
+                top: charSpans.offsetTop,
+                left: charSpans.offsetLeft
+            };
+        }
+    }
+
+    const cursorStyle = getCursorPosition();
     return (
         <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
             {words.map((word, index) => {
@@ -82,7 +110,7 @@ export default function Heor() {
                     </div>
                 )
             })}
-            <div className="text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100"></div>
+            <div className=" text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100" style={{ top: cursorStyle.top, left: cursorStyle.left }}></div>
         </div>
     )
 }

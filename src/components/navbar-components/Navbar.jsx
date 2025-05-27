@@ -1,7 +1,7 @@
 import React from "react";
-import NavButton from "./navbar-components/NavButton";
-import logo from "../assets/logo2.png";
-import Icons from "../config/Icons";
+import NavButton from "./NavButton";
+import logo from "../../assets/logo2.png";
+import Icons from "../../config/Icons";
 
 function Navbar() {
     const handleOnClick = (title) => {
