@@ -37,6 +37,7 @@ export default function Heor() {
                 const prevIndex = currentWordIndex - 1;
                 const prevTypedWord = wordTyped[prevIndex];
                 const correctWord = words[prevIndex];
+
                 if (prevTypedWord !== correctWord) {
                     setWordTyped(prev => {
                         const updated = [...prev];
@@ -48,8 +49,6 @@ export default function Heor() {
                 }
             }
         }
-
-
         else if (event.key.length === 1) {
             setInputs((prevInputs) => prevInputs + event.key);
         }
@@ -60,16 +59,27 @@ export default function Heor() {
     }, [inputs, currentWordIndex, wordTyped])
 
     function checkTypedChars(wordIndex, ch, index) {
-        if (wordIndex !== currentWordIndex) return;
-        const typedChar = inputs[index];
-        if (!typedChar) return '';
+        // Word already typed
+        if (wordIndex < currentWordIndex) {
+            const typedWord = wordTyped[wordIndex] || "";
+            const typedChar = typedWord[index];
+            if (!typedChar) return "text-white"; // fallback to white if missing
+            return typedChar === ch ? "text-white" : "text-red-500";
+        }
 
-        return typedChar === ch
-            ? "correct text-white"
-            : "wrong text-red-500";
+        // Current word
+        if (wordIndex === currentWordIndex) {
+            const typedChar = inputs[index];
+            if (!typedChar) return "text-gray-400"; // default for untyped character
+            return typedChar === ch ? "text-white" : "text-red-500";
+        }
+
+        // Not yet typed words
+        return "text-gray-400";
     }
 
     function checkWordTyped(word, index) {
+        console.log("index: " + index);
         if (wordTyped.length === 0) return;
         return word === wordTyped[index] ? "typed text-white" : "";
     }
@@ -81,27 +91,35 @@ export default function Heor() {
         const wordElement = wordElements[currentWordIndex];
         const spans = wordElement.querySelectorAll("span");
 
-        if (!spans || inputs.length === 0 || inputs.length >= spans.length) {
+        if (inputs.length === 0) {
             return {
                 top: wordElement.offsetTop,
                 left: wordElement.offsetLeft
             };
         }
-        else {
-            const charSpans = spans[inputs.length - 1]
+
+        if (inputs.length >= spans.length) {
+            const lastCharacter = spans[spans.length - 1]
             return {
-                top: charSpans.offsetTop,
-                left: charSpans.offsetLeft
-            };
+                top: lastCharacter.offsetTop,
+                left: lastCharacter.offsetLeft + lastCharacter.offsetWidth
+            }
         }
+
+        const charSpans = spans[inputs.length]
+        return {
+            top: charSpans.offsetTop,
+            left: charSpans.offsetLeft
+        };
     }
 
     const cursorStyle = getCursorPosition();
+
     return (
         <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
             {words.map((word, index) => {
                 return (word !== " ") && (
-                    <div key={index} className={`word  flex gap-x-1 font-medium font-sans ${checkWordTyped(word, index)}`}>
+                    <div key={index} className={`word flex gap-x-1 font-medium font-sans`}>
                         {Array.from(word).map((character, i) => {
                             return (
                                 <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
