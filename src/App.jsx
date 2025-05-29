@@ -1,5 +1,6 @@
 import Navbar from "./components/navbar-components/Navbar";
 import Hero from "./components/hero-components/Hero";
+import Navcomponent from "./components/gameOptions-components/Navcomponent";
 function App() {
 
   return (
@@ -8,6 +9,9 @@ function App() {
         <div className="col-start-2 col-span-3 row-span-3">
           <div>
             <Navbar />
+          </div>
+          <div className="my-5">
+            <Navcomponent />
           </div>
           <div>
             <Hero />

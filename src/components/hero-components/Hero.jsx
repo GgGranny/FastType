@@ -19,6 +19,7 @@ export default function Heor() {
     }, [currentWordIndex, inputs]);
 
     function handleKeyPressed(event) {
+        //simple spacebar logic
         if (event.key === ' ') {
             if (inputs.length > 0) {
                 setWordTyped((prev) => [...prev, inputs]);
@@ -29,15 +30,16 @@ export default function Heor() {
         }
 
         else if (event.key === "Backspace") {
+            //fallback to previous character
             if (inputs.length > 0) {
                 setInputs(prev => prev.slice(0, -1));
-                return;
             }
+
+            //fallback to previous words last character
             if (currentWordIndex > 0 && wordTyped.length >= currentWordIndex) {
                 const prevIndex = currentWordIndex - 1;
                 const prevTypedWord = wordTyped[prevIndex];
                 const correctWord = words[prevIndex];
-
                 if (prevTypedWord !== correctWord) {
                     setWordTyped(prev => {
                         const updated = [...prev];
@@ -48,9 +50,30 @@ export default function Heor() {
                     setCurrentWordIndex(prev => prev - 1);
                 }
             }
+
+            //removes the appeded child characters
+            if (words[currentWordIndex] && inputs.length >= words[currentWordIndex].length) {
+                const wordElements = containerRef.current?.querySelectorAll(".word");
+                const selectedWord = wordElements[currentWordIndex];
+                const appendedSpans = selectedWord.querySelectorAll("span.appendedChild");
+                if (appendedSpans.length > 0) {
+                    selectedWord.removeChild(appendedSpans[appendedSpans.length - 1]);
+                }
+            }
         }
+
         else if (event.key.length === 1) {
             setInputs((prevInputs) => prevInputs + event.key);
+            //append chid character if length exceeds
+            if (words[currentWordIndex] && inputs.length >= words[currentWordIndex].length) {
+                if (!words[currentWordIndex]) return;
+                const wordElements = containerRef.current?.querySelectorAll(".word");
+                const selectedWord = wordElements[currentWordIndex];
+                const newSpan = document.createElement("span");
+                newSpan.classList.add("appendedChild");
+                newSpan.textContent = event.key;
+                selectedWord.appendChild(newSpan);
+            }
         }
     }
 
@@ -63,7 +86,7 @@ export default function Heor() {
         if (wordIndex < currentWordIndex) {
             const typedWord = wordTyped[wordIndex] || "";
             const typedChar = typedWord[index];
-            if (!typedChar) return "text-white"; // fallback to white if missing
+            if (!typedChar) return "text-gray-500"; // fallback to gray if missing
             return typedChar === ch ? "text-white" : "text-red-500";
         }
 
@@ -73,24 +96,17 @@ export default function Heor() {
             if (!typedChar) return "text-gray-400"; // default for untyped character
             return typedChar === ch ? "text-white" : "text-red-500";
         }
-
         // Not yet typed words
         return "text-gray-400";
-    }
-
-    function checkWordTyped(word, index) {
-        console.log("index: " + index);
-        if (wordTyped.length === 0) return;
-        return word === wordTyped[index] ? "typed text-white" : "";
     }
 
     function getCursorPosition() {
         const wordElements = containerRef.current?.querySelectorAll(".word");
         if (!wordElements || !wordElements[currentWordIndex]) return { top: 0, left: 0 };
-
         const wordElement = wordElements[currentWordIndex];
         const spans = wordElement.querySelectorAll("span");
 
+        //cursor at the begining position
         if (inputs.length === 0) {
             return {
                 top: wordElement.offsetTop,
@@ -98,6 +114,7 @@ export default function Heor() {
             };
         }
 
+        //Cursor at the end position
         if (inputs.length >= spans.length) {
             const lastCharacter = spans[spans.length - 1]
             return {
@@ -106,6 +123,7 @@ export default function Heor() {
             }
         }
 
+        //cursor at during typing
         const charSpans = spans[inputs.length]
         return {
             top: charSpans.offsetTop,

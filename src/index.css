@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 body {
-    @apply bg-[#293241] text-white;
+    @apply bg-[#1c2321] text-[#eef1ef];
 
 }
 
@@ -11,6 +11,14 @@ body {
 
 .wrong {
     @apply text-red-500;
+}
+
+.appendedChild {
+    @apply text-red-400;
+}
+
+.active {
+    @apply text-blue-200;
 }
 
 @theme {
