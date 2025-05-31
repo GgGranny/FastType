@@ -21,6 +21,10 @@ body {
     @apply text-blue-200;
 }
 
+.spacer {
+    @apply h-4 w-[6px] rounded bg-gray-600;
+}
+
 @theme {
     --animate-blink: blinking 1s ease-in-out infinite;
 

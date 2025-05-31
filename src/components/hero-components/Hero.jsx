@@ -134,19 +134,22 @@ export default function Heor() {
     const cursorStyle = getCursorPosition();
 
     return (
-        <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
-            {words.map((word, index) => {
-                return (word !== " ") && (
-                    <div key={index} className={`word flex gap-x-1 font-medium font-sans`}>
-                        {Array.from(word).map((character, i) => {
-                            return (
-                                <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
-                            )
-                        })}
-                    </div>
-                )
-            })}
-            <div className=" text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100" style={{ top: cursorStyle.top, left: cursorStyle.left }}></div>
+        <div className="hero-container ">
+            <div><h1>time</h1></div>
+            <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
+                {words.map((word, index) => {
+                    return (word !== " ") && (
+                        <div key={index} className={`word flex gap-x-1 font-medium font-sans`}>
+                            {Array.from(word).map((character, i) => {
+                                return (
+                                    <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
+                                )
+                            })}
+                        </div>
+                    )
+                })}
+                <div className=" text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100" style={{ top: cursorStyle.top, left: cursorStyle.left }}></div>
+            </div>
         </div>
     )
 }
