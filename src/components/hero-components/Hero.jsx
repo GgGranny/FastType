@@ -1,11 +1,18 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
+import { TestContext } from "../context/TestContextAPI";
+import ResultPage from "../result-component/ResultPage";
 
 export default function Heor() {
+    const { time, showResult, setShowResult } = useContext(TestContext);
+    const [timer, setTimer] = useState(time);
     const [words, setWords] = useState([]);
     const [inputs, setInputs] = useState("");
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [wordTyped, setWordTyped] = useState([]);
+    const [isTyping, setIsTyping] = useState(false);
+    const [worongWordNo, setWrongWordNo] = useState(0);
     const containerRef = useRef(null);
+
 
     let string = "Prefix a fill utility with a breakpoint variant like md to only apply the utility at medium screen sizes and above";
 
@@ -16,9 +23,35 @@ export default function Heor() {
     useEffect(() => {
         document.addEventListener("keydown", handleKeyPressed);
         return () => document.removeEventListener("keydown", handleKeyPressed);
-    }, [currentWordIndex, inputs]);
+    }, [currentWordIndex, inputs, worongWordNo]);
+
+    useEffect(() => {
+        if (!isTyping) return;
+        setTimer(time);
+        const intervalId = setInterval(() => {
+            setTimer((prev) => {
+                console.log(prev);
+                if (prev === 1) {
+                    console.log("this is timer less than 1");
+                    setIsTyping(false);
+                    setShowResult(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, [isTyping]);
+
+    useEffect(() => {
+        if (!isTyping && timer <= 1) {
+            const result = calculateAccuracy();
+            setWrongWordNo(result);
+        }
+    }, [timer, isTyping]);
 
     function handleKeyPressed(event) {
+        setIsTyping(true);
         //simple spacebar logic
         if (event.key === ' ') {
             if (inputs.length > 0) {
@@ -133,24 +166,57 @@ export default function Heor() {
 
     const cursorStyle = getCursorPosition();
 
+    function calculateAccuracy() {
+        console.log("this iis accruracy 1 " + words.length + " " + wordTyped.length);
+        if (words.length === 0 || wordTyped.length === 0) return;
+        console.log("this iis accruracy 2");
+        let count = 0;
+        const minLength = Math.min(words.length, wordTyped.length);
+        for (let i = 0; i < minLength; i++) {
+            if (words[i] !== wordTyped[i]) {
+                count++;
+            }
+            console.log("count: " + count);
+        }
+        return count;
+    }
+
     return (
         <div className="hero-container ">
-            <div><h1>time</h1></div>
-            <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
-                {words.map((word, index) => {
-                    return (word !== " ") && (
-                        <div key={index} className={`word flex gap-x-1 font-medium font-sans`}>
-                            {Array.from(word).map((character, i) => {
-                                return (
-                                    <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
+            {
+                !showResult && (
+                    <div>
+                        <div className="time-container h-10 w-full">
+                            <div className={!isTyping ? "hidden" : "block"}><p>{timer}</p></div>
+                        </div>
+                        <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
+                            {words.map((word, index) => {
+                                return (word !== " ") && (
+                                    <div key={index} className={`word flex gap-x-1 font-medium font-sans`}>
+                                        {Array.from(word).map((character, i) => {
+                                            return (
+                                                <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
+                                            )
+                                        })}
+                                    </div>
                                 )
                             })}
+                            <div className=" text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100" style={{ top: cursorStyle.top, left: cursorStyle.left }}></div>
                         </div>
-                    )
-                })}
-                <div className=" text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100" style={{ top: cursorStyle.top, left: cursorStyle.left }}></div>
-            </div>
+                    </div>
+                )
+            }
+            {
+                showResult && (
+                    <div>
+                        <ResultPage />
+                    </div>
+                )
+            }
         </div>
     )
 }
+
+
+
 

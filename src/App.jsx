@@ -1,6 +1,8 @@
 import Navbar from "./components/navbar-components/Navbar";
 import Hero from "./components/hero-components/Hero";
 import Navcomponent from "./components/gameOptions-components/Navcomponent";
+import { useContext } from "react";
+import { TestContext } from "./components/context/TestContextAPI";
 function App() {
 
   return (
@@ -17,7 +19,7 @@ function App() {
             <Hero />
           </div>
         </div>
-      </div>
+      </div >
     </>
   )
 }
