@@ -1,21 +1,16 @@
 import React, { useState } from "react";
-import { LineChart } from "@mui/x-charts/LineChart";
+import Graph from "./Graph";
 
 function ResultPage() {
+    const xAxis = [1, 2, 3, 5, 8, 10];
+    const series = [2, 2.5, 5, 6, 9, 10];
+    let height = 200;
     return (
         <div>
             <div></div>
             <div>
                 <div>
-                    <LineChart
-                        xAxis={[{ data: [1, 2, 3, 5, 8, 10] }]}
-                        series={[
-                            {
-                                data: [2, 5.5, 2, 8.5, 1.5, 5],
-                            },
-                        ]}
-                        height={200}
-                    />
+                    <Graph xAxis={xAxis} series={series} height={height} axisColor={"#FFFFFF"} tickColor={"#FFFFFF"} labelColor={"#FFFFFF"} area={false} />
                 </div>
                 <div></div>
             </div>
