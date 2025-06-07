@@ -27,7 +27,7 @@ function Navbar() {
                     {Icons.map((icon, index) => {
                         return (
                             (icon.name == "keyboard" || icon.name == "crown" || icon.name == "settings") && (
-                                <NavButton key={index} className="text-white" onClick={() => handleOnClick(icon.name)}>
+                                <NavButton key={index} className="text-white" onClick={() => handleOnClick(icon.name)} path={icon.path}>
                                     {<icon.icon />}
                                 </NavButton>
                             )

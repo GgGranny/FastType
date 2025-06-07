@@ -1,18 +1,40 @@
 import React, { useState } from "react";
 import Graph from "./Graph";
+import FooterStatus from "./FooterStatus";
+import { useLocation } from "react-router-dom";
 
 function ResultPage() {
     const xAxis = [1, 2, 3, 5, 8, 10];
-    const series = [2, 2.5, 5, 6, 9, 10];
+    const series = [0, 2, 2.5, 4, 5];
     let height = 200;
+    const location = useLocation();
+    const result = location.state;
+
     return (
-        <div>
-            <div></div>
-            <div>
-                <div>
-                    <Graph xAxis={xAxis} series={series} height={height} axisColor={"#FFFFFF"} tickColor={"#FFFFFF"} labelColor={"#FFFFFF"} area={false} />
+        <div className="grid grid-cols-5 grid-rows-2">
+            <div className="row-start-1 col-start-1 col-span-5">
+                <div className="flex items-center">
+                    <div className="stat-container flex-none">
+                        <div>
+                            <div className="status-label"><p>wpm</p></div>
+                            <div className="status"><p>{result.wpm}</p></div>
+                        </div>
+                        <div>
+                            <div className="status-label"><p>acc</p></div>
+                            <div className="status">98%</div>
+                        </div>
+                    </div>
+                    <div className="graph-container flex-1">
+                        <div>
+                            <Graph yAxis={result.yAxis} xAxis={result.xAxis} series={series}
+                                height={height} axisColor={"#2F4858"} tickColor={"#FFFFFF"}
+                                labelColor={"gray"} area={true} errorNo={result.errNo} />
+                        </div>
+                    </div>
                 </div>
-                <div></div>
+            </div>
+            <div className="row-start-2 col-start-1 col-span-5">
+                <FooterStatus />
             </div>
         </div>
     )

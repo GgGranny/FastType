@@ -1,14 +1,18 @@
 import { axisClasses } from "@mui/x-charts";
 import { LineChart } from "@mui/x-charts/LineChart"
 
-function Graph({ xAxis, series, height, axisColor, labelColor, area }) {
+function Graph({ yAxis, xAxis, series, height, axisColor, labelColor, area, errorNo }) {
     return (
         <div>
             <LineChart
                 xAxis={[{ data: [...xAxis] }]}
+                yAxis={[
+                    { id: "left-axis", scaleType: "linear", data: [...yAxis], position: "left" },
+                    { id: "right-axis", scaleType: "linear", data: [...errorNo], position: "right" }
+                ]}
                 series={[
-                    { data: [...series], area, label: "rwp" },
-                    { data: [2, 3, 4, 5, 6, 7], area, label: "raw" }
+                    { yAxisId: "left-axis", data: [...series], label: "rwp", color: "#DAF7DC" },
+                    { yAxisId: "right-axis", data: [1, 2, 3, 4, 5], label: "rwp", color: "#DAF7DC" },
                 ]}
                 height={height}
                 sx={() => ({
@@ -22,6 +26,14 @@ function Graph({ xAxis, series, height, axisColor, labelColor, area }) {
                         }
                     }
                 })}
+                grid={{ vertical: true, horizontal: true }}
+                slotProps={{
+                    legend: {
+                        sx: {
+                            color: "#FFFFFF"
+                        }
+                    }
+                }}
             />
         </div>
     )

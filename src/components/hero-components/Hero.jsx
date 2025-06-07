@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { TestContext } from "../context/TestContextAPI";
-import ResultPage from "../result-component/ResultPage";
+import Navcomponent from "../gameOptions-components/Navcomponent";
+import { useNavigate } from "react-router-dom";
 
-export default function Heor() {
-    const { time, showResult, setShowResult } = useContext(TestContext);
+export default function Hero() {
+    let navigate = useNavigate();
+    const { time } = useContext(TestContext);
+    const [showResult, setShowResult] = useState(false);
     const [timer, setTimer] = useState(time);
     const [words, setWords] = useState([]);
     const [inputs, setInputs] = useState("");
@@ -11,6 +14,7 @@ export default function Heor() {
     const [wordTyped, setWordTyped] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
     const [worongWordNo, setWrongWordNo] = useState(0);
+    const [errorNo, setErrorNo] = useState(2);
     const containerRef = useRef(null);
 
 
@@ -35,6 +39,7 @@ export default function Heor() {
                     console.log("this is timer less than 1");
                     setIsTyping(false);
                     setShowResult(true);
+                    naviagteToResult();
                     return 0;
                 }
                 return prev - 1;
@@ -49,6 +54,42 @@ export default function Heor() {
             setWrongWordNo(result);
         }
     }, [timer, isTyping]);
+
+    async function naviagteToResult() {
+        let totalWordsTyped = inputs.length > 0 ? wordTyped.length + 1 : wordTyped.length;
+        try {
+            let wpm = await calculateWPM(totalWordsTyped, timer);
+            console.log("wpm: " + wpm)
+            let yAxis = []; //word per min
+            for (let i = 0; i <= words.length - 1; i++) {
+                yAxis.push(i);
+            }
+
+            let xAxis = [];
+            for (let i = 0; i <= timer - 1; i++) {
+                xAxis.push(i);
+            }
+
+            let errNo = [];
+            for (let i = 0; i <= errorNo - 1; i++) {
+                errNo.push(i);
+            }
+
+            if (inputs.length > 0) {
+                setWordTyped(prev => [...prev, inputs]);
+            }
+            navigate("/result", {
+                state: {
+                    yAxis,
+                    xAxis,
+                    errNo,
+                    wpm
+                }
+            })
+        } catch (error) {
+            console.error("error: " + error);
+        }
+    }
 
     function handleKeyPressed(event) {
         setIsTyping(true);
@@ -101,6 +142,7 @@ export default function Heor() {
             if (words[currentWordIndex] && inputs.length >= words[currentWordIndex].length) {
                 if (!words[currentWordIndex]) return;
                 const wordElements = containerRef.current?.querySelectorAll(".word");
+                if (!wordElements) return;
                 const selectedWord = wordElements[currentWordIndex];
                 const newSpan = document.createElement("span");
                 newSpan.classList.add("appendedChild");
@@ -181,8 +223,10 @@ export default function Heor() {
         return count;
     }
 
+
     return (
         <div className="hero-container ">
+            <div><Navcomponent /></div>
             {
                 !showResult && (
                     <div>
@@ -206,15 +250,25 @@ export default function Heor() {
                     </div>
                 )
             }
-            {
-                showResult && (
-                    <div>
-                        <ResultPage />
-                    </div>
-                )
-            }
         </div>
     )
+}
+
+function calculateWPM(totalWordsTyped, timeInSecond) {
+    console.log("this is calcualate wpm");
+    return new Promise((resolve, reject) => {
+        if (totalWordsTyped <= 0 || timeInSecond <= 0) {
+            reject("word typed in empty");
+        } else {
+            console.log("this is wpm")
+            let timeInMin = timeInSecond / 60;
+            console.log("time: " + timeInMin);
+            console.log("word length: " + totalWordsTyped);
+            let wpm = totalWordsTyped / timeInMin;
+            console.log("wpm: " + wpm);
+            resolve(wpm);
+        }
+    });
 }
 
 

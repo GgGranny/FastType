@@ -25,6 +25,15 @@ body {
     @apply h-4 w-[6px] rounded bg-gray-600;
 }
 
+.status-label {
+    @apply text-lg font-normal text-[#7c967e];
+
+}
+
+.status {
+    @apply text-2xl text-[#86BBD8];
+}
+
 @theme {
     --animate-blink: blinking 1s ease-in-out infinite;
 

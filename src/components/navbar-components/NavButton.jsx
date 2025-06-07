@@ -1,9 +1,9 @@
-import React from "react";
+import { NavLink } from "react-router-dom"
 
-export default function NavButton({ children, onClick, className = "" }) {
+export default function NavButton({ children, onClick, className = "", path }) {
     return (
         <div className={`hover:text-[#e0fbfc] transition-all ${className}`} onClick={onClick}>
-            {children}
+            <NavLink to={path}>{children}</NavLink>
         </div>
     )
 

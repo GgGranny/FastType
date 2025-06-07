@@ -7,19 +7,23 @@ import { FaBell } from "react-icons/fa6";
 const Icons = [
     {
         name: "keyboard",
-        icon: MdKeyboardAlt
+        icon: MdKeyboardAlt,
+        path: "/"
     },
     {
         name: "crown",
-        icon: FaCrown
+        icon: FaCrown,
+        path: "/leaderboard"
     },
     {
         name: "settings",
-        icon: IoSettingsSharp
+        icon: IoSettingsSharp,
+        path: "/settings"
     },
     {
         name: "bell",
-        icon: FaBell
+        icon: FaBell,
+        path: "/notification"
     }
 ]
 export default Icons;
