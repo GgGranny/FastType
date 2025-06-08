@@ -6,16 +6,16 @@ import { useNavigate } from "react-router-dom";
 export default function Hero() {
     let navigate = useNavigate();
     const { time } = useContext(TestContext);
-    const [showResult, setShowResult] = useState(false);
     const [timer, setTimer] = useState(time);
     const [words, setWords] = useState([]);
     const [inputs, setInputs] = useState("");
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [wordTyped, setWordTyped] = useState([]);
-    const [isTyping, setIsTyping] = useState(false);
+    const [isTyping, setIsTyping] = useState(true);
     const [worongWordNo, setWrongWordNo] = useState(0);
     const [errorNo, setErrorNo] = useState(2);
     const containerRef = useRef(null);
+    const wordTypedRef = useRef([]);
 
 
     let string = "Prefix a fill utility with a breakpoint variant like md to only apply the utility at medium screen sizes and above";
@@ -23,24 +23,33 @@ export default function Hero() {
     useEffect(() => {
         setWords(string.split(" "));
     }, []);
+    useEffect(() => {
+        wordTypedRef.current = wordTyped;
+    }, [wordTyped])
 
     useEffect(() => {
-        document.addEventListener("keydown", handleKeyPressed);
+        if (isTyping) {
+            document.addEventListener("keydown", handleKeyPressed);
+        } else {
+            document.removeEventListener("keydown", handleKeyPressed);
+        }
         return () => document.removeEventListener("keydown", handleKeyPressed);
-    }, [currentWordIndex, inputs, worongWordNo]);
+    }, [currentWordIndex, inputs, worongWordNo, isTyping]);
 
     useEffect(() => {
+        let wordTypedLength = wordTyped.length;
+        console.log("this is word typed: " + wordTypedLength);
         if (!isTyping) return;
         setTimer(time);
         const intervalId = setInterval(() => {
             setTimer((prev) => {
                 console.log(prev);
                 if (prev === 1) {
-                    console.log("this is timer less than 1");
+                    console.log("this is timer less than 1" + wordTypedLength);
                     setIsTyping(false);
-                    setShowResult(true);
-                    naviagteToResult();
-                    return 0;
+                    const latestWordTypedLength = wordTypedRef.current.length;
+                    navigateToResult(latestWordTypedLength, timer);
+                    return 1;
                 }
                 return prev - 1;
             });
@@ -48,48 +57,6 @@ export default function Hero() {
         return () => clearInterval(intervalId);
     }, [isTyping]);
 
-    useEffect(() => {
-        if (!isTyping && timer <= 1) {
-            const result = calculateAccuracy();
-            setWrongWordNo(result);
-        }
-    }, [timer, isTyping]);
-
-    async function naviagteToResult() {
-        let totalWordsTyped = inputs.length > 0 ? wordTyped.length + 1 : wordTyped.length;
-        try {
-            let wpm = await calculateWPM(totalWordsTyped, timer);
-            console.log("wpm: " + wpm)
-            let yAxis = []; //word per min
-            for (let i = 0; i <= words.length - 1; i++) {
-                yAxis.push(i);
-            }
-
-            let xAxis = [];
-            for (let i = 0; i <= timer - 1; i++) {
-                xAxis.push(i);
-            }
-
-            let errNo = [];
-            for (let i = 0; i <= errorNo - 1; i++) {
-                errNo.push(i);
-            }
-
-            if (inputs.length > 0) {
-                setWordTyped(prev => [...prev, inputs]);
-            }
-            navigate("/result", {
-                state: {
-                    yAxis,
-                    xAxis,
-                    errNo,
-                    wpm
-                }
-            })
-        } catch (error) {
-            console.error("error: " + error);
-        }
-    }
 
     function handleKeyPressed(event) {
         setIsTyping(true);
@@ -151,6 +118,38 @@ export default function Hero() {
             }
         }
     }
+
+    async function navigateToResult(wordTypedLength, t) {
+        try {
+            let wpm = await calculateWPM(wordTypedLength, t);
+            console.log("wpm: " + wpm)
+            let yAxis = []; //word per min
+            for (let i = 0; i <= words.length - 1; i++) {
+                yAxis.push(i);
+            }
+
+            let xAxis = [];
+            for (let i = 0; i <= timer - 1; i++) {
+                xAxis.push(i);
+            }
+
+            let errNo = [];
+            for (let i = 0; i <= errorNo - 1; i++) {
+                errNo.push(i);
+            }
+            navigate("/result", {
+                state: {
+                    yAxis,
+                    xAxis,
+                    errNo,
+                    wpm
+                }
+            })
+        } catch (error) {
+            console.error("error: " + error);
+        }
+    }
+
 
     useEffect(() => {
         console.log(inputs, currentWordIndex, wordTyped);
@@ -227,29 +226,25 @@ export default function Hero() {
     return (
         <div className="hero-container ">
             <div><Navcomponent /></div>
-            {
-                !showResult && (
-                    <div>
-                        <div className="time-container h-10 w-full">
-                            <div className={!isTyping ? "hidden" : "block"}><p>{timer}</p></div>
-                        </div>
-                        <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
-                            {words.map((word, index) => {
-                                return (word !== " ") && (
-                                    <div key={index} className={`word flex gap-x-1 font-medium font-sans`}>
-                                        {Array.from(word).map((character, i) => {
-                                            return (
-                                                <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
-                                            )
-                                        })}
-                                    </div>
-                                )
-                            })}
-                            <div className=" text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100" style={{ top: cursorStyle.top, left: cursorStyle.left }}></div>
-                        </div>
-                    </div>
-                )
-            }
+            <div>
+                <div className="time-container h-10 w-full">
+                    <div className={!isTyping ? "hidden" : "block"}><p>{timer}</p></div>
+                </div>
+                <div className="relative flex gap-x-5 flex-wrap text-3xl gap-y-5 text-gray-400 h-[154px]" ref={containerRef}>
+                    {words.map((word, index) => {
+                        return (word !== " ") && (
+                            <div key={index} className={`word flex gap-x-1 font-medium font-sans`}>
+                                {Array.from(word).map((character, i) => {
+                                    return (
+                                        <span className={checkTypedChars(index, character, i)} key={i}>{character}</span>
+                                    )
+                                })}
+                            </div>
+                        )
+                    })}
+                    <div className=" text-cursor rounded absolute h-[40px] w-[3px] animate-blink transition-all bg-amber-100" style={{ top: cursorStyle.top, left: cursorStyle.left }}></div>
+                </div>
+            </div>
         </div>
     )
 }
