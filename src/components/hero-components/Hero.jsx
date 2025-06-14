@@ -4,7 +4,6 @@ import Navcomponent from "../gameOptions-components/Navcomponent";
 import { useNavigate } from "react-router-dom";
 
 export default function Hero() {
-    let navigate = useNavigate();
     const { time } = useContext(TestContext);
     const [timer, setTimer] = useState(time);
     const [words, setWords] = useState([]);
@@ -12,20 +11,25 @@ export default function Hero() {
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [wordTyped, setWordTyped] = useState([]);
     const [isTyping, setIsTyping] = useState(true);
+    const [typingHasStarted, setTypingHasStarted] = useState(false);
     const [worongWordNo, setWrongWordNo] = useState(0);
     const [errorNo, setErrorNo] = useState(2);
     const containerRef = useRef(null);
+    const timerRef = useRef(0);
     const wordTypedRef = useRef([]);
 
+    let navigate = useNavigate();
 
     let string = "Prefix a fill utility with a breakpoint variant like md to only apply the utility at medium screen sizes and above";
 
     useEffect(() => {
         setWords(string.split(" "));
     }, []);
+
     useEffect(() => {
         wordTypedRef.current = wordTyped;
-    }, [wordTyped])
+        timerRef.current = timer;
+    }, [wordTyped, timer]);
 
     useEffect(() => {
         if (isTyping) {
@@ -36,10 +40,11 @@ export default function Hero() {
         return () => document.removeEventListener("keydown", handleKeyPressed);
     }, [currentWordIndex, inputs, worongWordNo, isTyping]);
 
+
     useEffect(() => {
         let wordTypedLength = wordTyped.length;
-        console.log("this is word typed: " + wordTypedLength);
         if (!isTyping) return;
+        if (!typingHasStarted) return;
         setTimer(time);
         const intervalId = setInterval(() => {
             setTimer((prev) => {
@@ -47,7 +52,7 @@ export default function Hero() {
                 if (prev === 1) {
                     console.log("this is timer less than 1" + wordTypedLength);
                     setIsTyping(false);
-                    const latestWordTypedLength = wordTypedRef.current.length;
+                    const latestWordTypedLength = wordTypedRef.current;
                     navigateToResult(latestWordTypedLength, timer);
                     return 1;
                 }
@@ -55,11 +60,12 @@ export default function Hero() {
             });
         }, 1000);
         return () => clearInterval(intervalId);
-    }, [isTyping]);
+    }, [isTyping, typingHasStarted]);
 
 
     function handleKeyPressed(event) {
         setIsTyping(true);
+        setTypingHasStarted(true);
         //simple spacebar logic
         if (event.key === ' ') {
             if (inputs.length > 0) {
@@ -119,9 +125,16 @@ export default function Hero() {
         }
     }
 
-    async function navigateToResult(wordTypedLength, t) {
+    async function navigateToResult(currentWordTyped, t) {
         try {
+            const wordTypedLength = currentWordTyped.length;
             let wpm = await calculateWPM(wordTypedLength, t);
+            let acc = await calculateAccuracy(currentWordTyped, words);
+            let { extraCh,
+                wrongCh,
+                chs,
+                missedCh } = await calculateCharacters(currentWordTyped, words);
+
             console.log("wpm: " + wpm)
             let yAxis = []; //word per min
             for (let i = 0; i <= words.length - 1; i++) {
@@ -129,9 +142,10 @@ export default function Hero() {
             }
 
             let xAxis = [];
-            for (let i = 0; i <= timer - 1; i++) {
+            for (let i = 0; i <= t - 1; i++) {
                 xAxis.push(i);
             }
+            xAxis.forEach((t) => console.log(t));
 
             let errNo = [];
             for (let i = 0; i <= errorNo - 1; i++) {
@@ -142,7 +156,12 @@ export default function Hero() {
                     yAxis,
                     xAxis,
                     errNo,
-                    wpm
+                    wpm,
+                    acc,
+                    extraCh,
+                    wrongCh,
+                    chs,
+                    missedCh
                 }
             })
         } catch (error) {
@@ -207,19 +226,23 @@ export default function Hero() {
 
     const cursorStyle = getCursorPosition();
 
-    function calculateAccuracy() {
-        console.log("this iis accruracy 1 " + words.length + " " + wordTyped.length);
-        if (words.length === 0 || wordTyped.length === 0) return;
-        console.log("this iis accruracy 2");
-        let count = 0;
-        const minLength = Math.min(words.length, wordTyped.length);
-        for (let i = 0; i < minLength; i++) {
-            if (words[i] !== wordTyped[i]) {
-                count++;
+    async function calculateAccuracy(wordTyped, words) {
+        return new Promise((resolve, reject) => {
+            if (!wordTyped || wordTyped.length === 0) {
+                reject("typed word is empty");
+                return;
             }
-            console.log("count: " + count);
-        }
-        return count;
+            console.log("this iis accruracy 2");
+            console.log(wordTyped);
+            let correctWordsNo = 0;
+            let typedWordsNo = wordTyped.length;
+            for (let i = 0; i <= typedWordsNo - 1; i++) {
+                if (words[i] === wordTyped[i]) {
+                    correctWordsNo++;
+                }
+            }
+            resolve(Math.floor((correctWordsNo / typedWordsNo) * 100));
+        })
     }
 
 
@@ -264,6 +287,44 @@ function calculateWPM(totalWordsTyped, timeInSecond) {
             resolve(wpm);
         }
     });
+}
+
+async function calculateCharacters(wordTyped, words) {
+    let chs = wordTyped.join(" ").length;
+    let wrongCh = 0;
+    let extraCh = 0;
+    let missedCh = 0;
+
+    for (let i = 0; i < wordTyped.length; i++) {
+        const typedWord = wordTyped[i] || "";
+        const actualWord = words[i] || "";
+
+        const minLength = Math.min(typedWord.length, actualWord.length);
+
+        // Count wrong characters in the common length
+        for (let j = 0; j < minLength; j++) {
+            if (typedWord[j] !== actualWord[j]) {
+                wrongCh++;
+            }
+        }
+
+        // Count extra characters
+        if (typedWord.length > actualWord.length) {
+            extraCh += typedWord.length - actualWord.length;
+        }
+
+        // Count missed characters
+        if (typedWord.length < actualWord.length) {
+            missedCh += actualWord.length - typedWord.length;
+        }
+    }
+
+    return {
+        extraCh,
+        wrongCh,
+        chs,
+        missedCh
+    };
 }
 
 

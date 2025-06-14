@@ -7,13 +7,16 @@ export const TestContextProvider = ({ children }) => {
     const [activeOption, setActiveOption] = useState("time");
     const [activeDuration, setActiveDuration] = useState(5);
     const [acitveWordAmount, setAcitveWordAmount] = useState(30);
+    const [testType, setTestType] = useState("time");
 
     function handleTime(str) {
         setActiveOption(str);
-
+        setTestType(str);
     }
+
     function handleWord(str) {
         setActiveOption(str);
+        setTestType(str);
     }
     function handlePunctuation(str) {
         setActiveOption(str);
@@ -39,6 +42,7 @@ export const TestContextProvider = ({ children }) => {
     }
     const contextValue = {
         time,
+        testType,
         activeOption,
         activeDuration,
         acitveWordAmount,

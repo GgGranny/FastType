@@ -12,7 +12,7 @@ function Graph({ yAxis, xAxis, series, height, axisColor, labelColor, area, erro
                 ]}
                 series={[
                     { yAxisId: "left-axis", data: [...series], label: "rwp", color: "#DAF7DC" },
-                    { yAxisId: "right-axis", data: [1, 2, 3, 4, 5], label: "rwp", color: "#DAF7DC" },
+                    // { yAxisId: "right-axis", data: [1, 2, 3, 4, 5], label: "rwp", color: "#DAF7DC" },
                 ]}
                 height={height}
                 sx={() => ({

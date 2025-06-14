@@ -21,7 +21,7 @@ function ResultPage() {
                         </div>
                         <div>
                             <div className="status-label"><p>acc</p></div>
-                            <div className="status">98%</div>
+                            <div className="status">{result.acc}%</div>
                         </div>
                     </div>
                     <div className="graph-container flex-1">
@@ -34,7 +34,7 @@ function ResultPage() {
                 </div>
             </div>
             <div className="row-start-2 col-start-1 col-span-5">
-                <FooterStatus />
+                <FooterStatus result={result} />
             </div>
         </div>
     )
