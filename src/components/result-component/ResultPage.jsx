@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 
 function ResultPage() {
     const xAxis = [1, 2, 3, 5, 8, 10];
-    const series = [0, 2, 2.5, 4, 5];
+    const series = [0, 2, 4, 5];
     let height = 200;
     const location = useLocation();
     const result = location.state;

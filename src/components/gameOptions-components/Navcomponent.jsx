@@ -20,7 +20,7 @@ function Navcomponent() {
         handleTimeCustomize,
         handleWordsCustomize
     } = useContext(TestContext);
-    const durations = [5, 30, 45, 50];
+    const durations = [5, 15, 45, 50];
     const wordAmount = [10, 25, 30, 50];
 
 

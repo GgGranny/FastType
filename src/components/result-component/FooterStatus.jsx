@@ -19,11 +19,11 @@ function FooterStatus({ result }) {
             </div>
             <div className="consistency">
                 <div className="status-label"><p>consistecy</p></div>
-                <div className="status"><p>43</p></div>
+                <div className="status"><p>{result.consistency}</p></div>
             </div>
             <div className="time-count-container">
                 <div className="status-label"><p>time</p></div>
-                <div className="status"><p>43</p></div>
+                <div className="status"><p>{result.t < 60? `${result.t} seconds`: `${(result.t/60).toFixed(2)} mins`}</p></div>
             </div>
         </div>
     )

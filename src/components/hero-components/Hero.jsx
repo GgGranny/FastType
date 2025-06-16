@@ -14,6 +14,7 @@ export default function Hero() {
     const [typingHasStarted, setTypingHasStarted] = useState(false);
     const [worongWordNo, setWrongWordNo] = useState(0);
     const [errorNo, setErrorNo] = useState(2);
+    const [wpmPerSecond, setWpmPerSecond] = useState([]);
     const containerRef = useRef(null);
     const timerRef = useRef(0);
     const wordTypedRef = useRef([]);
@@ -26,10 +27,14 @@ export default function Hero() {
         setWords(string.split(" "));
     }, []);
 
+    useEffect(()=> {
+        setTimer(time);
+        timerRef.current = time;
+    }, [time]);
+
     useEffect(() => {
         wordTypedRef.current = wordTyped;
-        timerRef.current = timer;
-    }, [wordTyped, timer]);
+    }, [wordTyped]);
 
     useEffect(() => {
         if (isTyping) {
@@ -42,18 +47,17 @@ export default function Hero() {
 
 
     useEffect(() => {
-        let wordTypedLength = wordTyped.length;
-        if (!isTyping) return;
-        if (!typingHasStarted) return;
-        setTimer(time);
+        if (!isTyping || !typingHasStarted) return;
+        let t = timerRef.current;
         const intervalId = setInterval(() => {
             setTimer((prev) => {
-                console.log(prev);
+                const elapsed = time - prev + 1; // seconds elapsed
+                const typedSoFar = wordTypedRef.current.length;
+                const wpmNow = (typedSoFar / elapsed) * 60; // Words per minute at this second
+                setWpmPerSecond(prev => [...prev, Math.round(wpmNow)]);
                 if (prev === 1) {
-                    console.log("this is timer less than 1" + wordTypedLength);
                     setIsTyping(false);
-                    const latestWordTypedLength = wordTypedRef.current;
-                    navigateToResult(latestWordTypedLength, timer);
+                    navigateToResult(wordTypedRef.current, t, [...wpmPerSecond, Math.round(wpmNow)]);
                     return 1;
                 }
                 return prev - 1;
@@ -61,6 +65,7 @@ export default function Hero() {
         }, 1000);
         return () => clearInterval(intervalId);
     }, [isTyping, typingHasStarted]);
+
 
 
     function handleKeyPressed(event) {
@@ -125,7 +130,7 @@ export default function Hero() {
         }
     }
 
-    async function navigateToResult(currentWordTyped, t) {
+    async function navigateToResult(currentWordTyped, t, wpmList = []) {
         try {
             const wordTypedLength = currentWordTyped.length;
             let wpm = await calculateWPM(wordTypedLength, t);
@@ -161,9 +166,12 @@ export default function Hero() {
                     extraCh,
                     wrongCh,
                     chs,
-                    missedCh
+                    missedCh,
+                    consistency: calculateConsistency(wpmList),
+                    t
                 }
-            })
+            });
+
         } catch (error) {
             console.error("error: " + error);
         }
@@ -325,6 +333,23 @@ async function calculateCharacters(wordTyped, words) {
         chs,
         missedCh
     };
+}
+
+
+function calculateConsistency(wpmRecords) {
+    if (wpmRecords.length <= 1) return 100;
+
+    const n = wpmRecords.length;
+    const avg = wpmRecords.reduce((a, b) => a + b, 0) / n;
+
+    const variance = wpmRecords.reduce((sum, wpm) => {
+        return sum + Math.pow(wpm - avg, 2);
+    }, 0) / n;
+
+    const stdDev = Math.sqrt(variance);
+
+    const consistency = Math.max(0, Math.min(100, 100 - (stdDev / avg) * 100));
+    return consistency.toFixed(2); // Returns value like 87.34
 }
 
 
