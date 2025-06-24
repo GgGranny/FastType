@@ -17,6 +17,7 @@ export default function Hero() {
     const [wpmPerSecond, setWpmPerSecond] = useState([]);
     const containerRef = useRef(null);
     const timerRef = useRef(0);
+    const inputRef = useRef("");
     const wordTypedRef = useRef([]);
 
     let navigate = useNavigate();
@@ -25,16 +26,21 @@ export default function Hero() {
 
     useEffect(() => {
         setWords(string.split(" "));
+        setInputs("");
+        setCurrentWordIndex(0);
+        setIsTyping(true);
+        setWordTyped([]);
     }, []);
 
-    useEffect(()=> {
+    useEffect(() => {
         setTimer(time);
         timerRef.current = time;
     }, [time]);
 
     useEffect(() => {
         wordTypedRef.current = wordTyped;
-    }, [wordTyped]);
+        inputRef.current = inputs;
+    }, [wordTyped, inputs]);
 
     useEffect(() => {
         if (isTyping) {
@@ -130,45 +136,49 @@ export default function Hero() {
         }
     }
 
-    async function navigateToResult(currentWordTyped, t, wpmList = []) {
+    async function navigateToResult(currentWordTyped, t) {
+        let newWordTypedArray = [...currentWordTyped];
+        if (inputs.length > 0) newWordTypedArray.push(inputRef.current);
+
         try {
-            const wordTypedLength = currentWordTyped.length;
-            let wpm = await calculateWPM(wordTypedLength, t);
-            let acc = await calculateAccuracy(currentWordTyped, words);
-            let { extraCh,
-                wrongCh,
-                chs,
-                missedCh } = await calculateCharacters(currentWordTyped, words);
+            const wordTypedLength = newWordTypedArray.length;
+            const totalWPM = await calculateWPM(wordTypedLength, t);
+            const acc = await calculateAccuracy(newWordTypedArray, words);
+            const { extraCh, wrongCh, chs, missedCh } = await calculateCharacters(newWordTypedArray, words);
 
-            console.log("wpm: " + wpm)
-            let yAxis = []; //word per min
-            for (let i = 0; i <= words.length - 1; i++) {
-                yAxis.push(i);
+            // Simulate WPM progression over time — linear assumption
+            let wpmList = [];
+            for (let i = 1; i <= t; i++) {
+                const partialWPM = await calculateWPM(Math.floor((wordTypedLength / t) * i), i);
+                wpmList.push(parseFloat(partialWPM.toFixed(2)));
             }
 
-            let xAxis = [];
-            for (let i = 0; i <= t - 1; i++) {
-                xAxis.push(i);
-            }
-            xAxis.forEach((t) => console.log(t));
+            // Y-axis label is fixed
+            let yAxis = Array.from({ length: words.length }, (_, i) => words.length - 1 - i);
 
-            let errNo = [];
-            for (let i = 0; i <= errorNo - 1; i++) {
-                errNo.push(i);
-            }
+            // X-axis = each second
+            let xAxis = Array.from({ length: t }, (_, i) => i + 1);
+
+            // Error count (dummy)
+            let errNo = Array.from({ length: wrongCh }, (_, i) => i + 1);
+
+            // Primary series = WPM per second
+            let primarySeries = [...wpmList];
+
             navigate("/result", {
                 state: {
                     yAxis,
                     xAxis,
                     errNo,
-                    wpm,
+                    wpm: totalWPM,
                     acc,
                     extraCh,
                     wrongCh,
                     chs,
                     missedCh,
                     consistency: calculateConsistency(wpmList),
-                    t
+                    t,
+                    primarySeries
                 }
             });
 
@@ -176,6 +186,7 @@ export default function Hero() {
             console.error("error: " + error);
         }
     }
+
 
 
     useEffect(() => {
@@ -252,6 +263,74 @@ export default function Hero() {
             resolve(Math.floor((correctWordsNo / typedWordsNo) * 100));
         })
     }
+    function calculateWPM(totalWordsTyped, timeInSeconds) {
+        return new Promise((resolve) => {
+            if (totalWordsTyped <= 0 || timeInSeconds <= 0) {
+                resolve(0);
+            } else {
+                const timeInMinutes = timeInSeconds / 60;
+                const wpm = totalWordsTyped / timeInMinutes;
+                resolve(parseFloat(wpm.toFixed(2)));
+            }
+        });
+    }
+
+
+    async function calculateCharacters(wordTyped, words) {
+        let chs = wordTyped.join(" ").length;
+        let wrongCh = 0;
+        let extraCh = 0;
+        let missedCh = 0;
+
+        for (let i = 0; i < wordTyped.length; i++) {
+            const typedWord = wordTyped[i] || "";
+            const actualWord = words[i] || "";
+
+            const minLength = Math.min(typedWord.length, actualWord.length);
+
+            // Count wrong characters in the common length
+            for (let j = 0; j < minLength; j++) {
+                if (typedWord[j] !== actualWord[j]) {
+                    wrongCh++;
+                }
+            }
+
+            // Count extra characters
+            if (typedWord.length > actualWord.length) {
+                extraCh += typedWord.length - actualWord.length;
+            }
+
+            // Count missed characters
+            if (typedWord.length < actualWord.length) {
+                missedCh += actualWord.length - typedWord.length;
+            }
+        }
+
+        return {
+            extraCh,
+            wrongCh,
+            chs,
+            missedCh
+        };
+    }
+
+
+    function calculateConsistency(wpmRecords) {
+        if (wpmRecords.length <= 1) return 100;
+
+        const n = wpmRecords.length;
+        const avg = wpmRecords.reduce((a, b) => a + b, 0) / n;
+
+        const variance = wpmRecords.reduce((sum, wpm) => {
+            return sum + Math.pow(wpm - avg, 2);
+        }, 0) / n;
+
+        const stdDev = Math.sqrt(variance);
+
+        const consistency = Math.max(0, Math.min(100, 100 - (stdDev / avg) * 100));
+        return consistency.toFixed(2); // Returns value like 87.34
+    }
+
 
 
     return (
@@ -280,77 +359,6 @@ export default function Hero() {
     )
 }
 
-function calculateWPM(totalWordsTyped, timeInSecond) {
-    console.log("this is calcualate wpm");
-    return new Promise((resolve, reject) => {
-        if (totalWordsTyped <= 0 || timeInSecond <= 0) {
-            reject("word typed in empty");
-        } else {
-            console.log("this is wpm")
-            let timeInMin = timeInSecond / 60;
-            console.log("time: " + timeInMin);
-            console.log("word length: " + totalWordsTyped);
-            let wpm = totalWordsTyped / timeInMin;
-            console.log("wpm: " + wpm);
-            resolve(wpm);
-        }
-    });
-}
-
-async function calculateCharacters(wordTyped, words) {
-    let chs = wordTyped.join(" ").length;
-    let wrongCh = 0;
-    let extraCh = 0;
-    let missedCh = 0;
-
-    for (let i = 0; i < wordTyped.length; i++) {
-        const typedWord = wordTyped[i] || "";
-        const actualWord = words[i] || "";
-
-        const minLength = Math.min(typedWord.length, actualWord.length);
-
-        // Count wrong characters in the common length
-        for (let j = 0; j < minLength; j++) {
-            if (typedWord[j] !== actualWord[j]) {
-                wrongCh++;
-            }
-        }
-
-        // Count extra characters
-        if (typedWord.length > actualWord.length) {
-            extraCh += typedWord.length - actualWord.length;
-        }
-
-        // Count missed characters
-        if (typedWord.length < actualWord.length) {
-            missedCh += actualWord.length - typedWord.length;
-        }
-    }
-
-    return {
-        extraCh,
-        wrongCh,
-        chs,
-        missedCh
-    };
-}
-
-
-function calculateConsistency(wpmRecords) {
-    if (wpmRecords.length <= 1) return 100;
-
-    const n = wpmRecords.length;
-    const avg = wpmRecords.reduce((a, b) => a + b, 0) / n;
-
-    const variance = wpmRecords.reduce((sum, wpm) => {
-        return sum + Math.pow(wpm - avg, 2);
-    }, 0) / n;
-
-    const stdDev = Math.sqrt(variance);
-
-    const consistency = Math.max(0, Math.min(100, 100 - (stdDev / avg) * 100));
-    return consistency.toFixed(2); // Returns value like 87.34
-}
 
 
 

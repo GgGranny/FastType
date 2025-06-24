@@ -4,8 +4,6 @@ import FooterStatus from "./FooterStatus";
 import { useLocation } from "react-router-dom";
 
 function ResultPage() {
-    const xAxis = [1, 2, 3, 5, 8, 10];
-    const series = [0, 2, 4, 5];
     let height = 200;
     const location = useLocation();
     const result = location.state;
@@ -26,7 +24,7 @@ function ResultPage() {
                     </div>
                     <div className="graph-container flex-1">
                         <div>
-                            <Graph yAxis={result.yAxis} xAxis={result.xAxis} series={series}
+                            <Graph yAxis={result.yAxis} xAxis={result.xAxis} primarySeries={result.primarySeries}
                                 height={height} axisColor={"#2F4858"} tickColor={"#FFFFFF"}
                                 labelColor={"gray"} area={true} errorNo={result.errNo} />
                         </div>
