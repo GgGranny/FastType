@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Graph from "./Graph";
 import FooterStatus from "./FooterStatus";
 import { useLocation } from "react-router-dom";
+import LineChart from "./LineChart";
 
 function ResultPage() {
     let height = 200;
@@ -24,7 +25,7 @@ function ResultPage() {
                     </div>
                     <div className="graph-container flex-1">
                         <div>
-                            <Graph yAxis={result.yAxis} xAxis={result.xAxis} primarySeries={result.primarySeries}
+                            <Graph yAxis={result.yAxis} xAxis={result.xAxis} primarySeries={result.primarySeries} secondarySeries={result.wrongWordsArray}
                                 height={height} axisColor={"#2F4858"} tickColor={"#FFFFFF"}
                                 labelColor={"gray"} area={true} errorNo={result.errNo} />
                         </div>

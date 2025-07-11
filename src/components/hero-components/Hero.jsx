@@ -19,6 +19,8 @@ export default function Hero() {
     const timerRef = useRef(0);
     const inputRef = useRef("");
     const wordTypedRef = useRef([]);
+    const wrongWordsTypedRef = useRef([]);
+    const currentWordIndexRef = useRef(0);
 
     let navigate = useNavigate();
 
@@ -40,6 +42,7 @@ export default function Hero() {
     useEffect(() => {
         wordTypedRef.current = wordTyped;
         inputRef.current = inputs;
+        currentWordIndexRef.current = currentWordIndex;
     }, [wordTyped, inputs]);
 
     useEffect(() => {
@@ -55,15 +58,20 @@ export default function Hero() {
     useEffect(() => {
         if (!isTyping || !typingHasStarted) return;
         let t = timerRef.current;
+        let wrongTimes = [];
         const intervalId = setInterval(() => {
             setTimer((prev) => {
-                const elapsed = time - prev + 1; // seconds elapsed
+                const elapsed = time - prev; // seconds elapsed
                 const typedSoFar = wordTypedRef.current.length;
                 const wpmNow = (typedSoFar / elapsed) * 60; // Words per minute at this second
+                const wrongWords = calculateWrongWords(wordTypedRef.current, words, currentWordIndexRef.current);
+                if (wrongWords) {
+                    wrongTimes.push(elapsed);
+                }
                 setWpmPerSecond(prev => [...prev, Math.round(wpmNow)]);
                 if (prev === 1) {
                     setIsTyping(false);
-                    navigateToResult(wordTypedRef.current, t, [...wpmPerSecond, Math.round(wpmNow)]);
+                    navigateToResult(wordTypedRef.current, t, wrongTimes);
                     return 1;
                 }
                 return prev - 1;
@@ -73,7 +81,14 @@ export default function Hero() {
     }, [isTyping, typingHasStarted]);
 
 
-
+    function calculateWrongWords(refWordTyped, words, index) {
+        if (!refWordTyped || refWordTyped.length === 0) return;
+        let currentIndex = index <= 0 ? 0 : index - 1;
+        if (refWordTyped[currentIndex] !== words[currentIndex]) {
+            return true;
+        }
+        return false;
+    }
     function handleKeyPressed(event) {
         setIsTyping(true);
         setTypingHasStarted(true);
@@ -136,16 +151,16 @@ export default function Hero() {
         }
     }
 
-    async function navigateToResult(currentWordTyped, t) {
+    async function navigateToResult(currentWordTyped, t, worngWordTimes) {
+        console.log("wrong words index: " + worngWordTimes);
         let newWordTypedArray = [...currentWordTyped];
+        let wrongWordsArray = [...new Set(worngWordTimes)];
         if (inputs.length > 0) newWordTypedArray.push(inputRef.current);
-
         try {
             const wordTypedLength = newWordTypedArray.length;
             const totalWPM = await calculateWPM(wordTypedLength, t);
             const acc = await calculateAccuracy(newWordTypedArray, words);
             const { extraCh, wrongCh, chs, missedCh } = await calculateCharacters(newWordTypedArray, words);
-
             // Simulate WPM progression over time — linear assumption
             let wpmList = [];
             for (let i = 1; i <= t; i++) {
@@ -154,7 +169,7 @@ export default function Hero() {
             }
 
             // Y-axis label is fixed
-            let yAxis = Array.from({ length: words.length }, (_, i) => words.length - 1 - i);
+            let yAxis = Array.from({ length: words.length }, (_, i) => i);
 
             // X-axis = each second
             let xAxis = Array.from({ length: t }, (_, i) => i + 1);
@@ -178,7 +193,8 @@ export default function Hero() {
                     missedCh,
                     consistency: calculateConsistency(wpmList),
                     t,
-                    primarySeries
+                    primarySeries,
+                    wrongWordsArray
                 }
             });
 
@@ -187,7 +203,17 @@ export default function Hero() {
         }
     }
 
+    function countHighetErrorNo(arr) {
+        const count = {};
+        for (const item of arr) {
+            count[item] = (count[item] || 0) + 1;
+        }
+        //convert to arr of key value pairs
+        const entries = Object.entries(count);
 
+        entries.sort((a, b) => b[1] - a[1]);
+        return entries[0];
+    }
 
     useEffect(() => {
         console.log(inputs, currentWordIndex, wordTyped);
